@@ -1,0 +1,16 @@
+/literature/
+/jupiter/
+/documentation/
+/matlab/output/
+/matlab/data/
+/matlab/playgrounds/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+
+# other hidden files
+.idea
+.obsidian
+.RData
+.Rhistory

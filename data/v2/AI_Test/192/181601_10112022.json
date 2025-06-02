@@ -1,0 +1,11 @@
+{
+  "raw": "181601_10112022",
+  "origin_file_id": "192_10112022",
+  "short_file_id": "193",
+  "date": "2022-11-10",
+  "width": "34",
+  "height": "3318",
+  "col_names": ["CL1cBAK2", "CL2cBAK2", "CL3cBAK2", "CL4cBAK2", "CL5polyAC", "CL6polyAC", "CL7polyAC", "CL8polyAC"],
+  "injections": [3, 0, 1, 3, 0, 1, 3],
+  "rounds": [1, 1, 1, 2, 2, 2, 2]
+}

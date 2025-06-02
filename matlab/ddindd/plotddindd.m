@@ -1,0 +1,219 @@
+function H = plotddindd(d, varargin)
+%
+% Args:
+%       d (struct): output struct from ddindd function
+%
+%   optional:
+%       plotCorrType (int): which injection type should be plotted too with correction (default = 1)
+%       plotUncorrType (int): which injection type should be plotted too without correction (default = NaN)
+%       plotUncorrToo (bool): should uncorrected drift be plotted too (default = 1)
+%       plotFitToo (bool): should fit function plotted too (default = 0)
+%       plotType (int): plot design for output (default = 0)
+%
+%       plotSensors (cell array): plot only these sensors (default = [1:n_sensors])
+%       plotRounds (cell array): plot only these sensors (default = [1:n_rounds])
+%
+% Results:
+%
+if isstruct(d) && strcmp(d.meta.type, 'ddindd')
+    %% parse second argument (option parameter)
+    n = length(varargin);
+        if mod(n,2) ~= 0
+            error("[ERROR][input parsing] optional arg list must be paired keywords and values. # of extra args must be even.");
+        end
+    
+    KeyList = varargin(1:2:n);
+    KeyList = cellfun(@char,KeyList,'UniformOutput',false); % convert strings to chars
+    KeyList = lower(KeyList);
+    ValList = varargin(2:2:n);
+    %% define vars
+
+    shortFileId     = GetValue(d, 'meta.shortFileId', "NaN"); % "193";
+    dateStr         = GetValue(d, 'meta.dateStr', "0000-00-00"); % "2025-05-23";
+   
+    injections      = GetValue(d, 'meta.injections', []); 
+
+    relInj          = GetValue(d, 'meta.relInj', 0); % int;
+
+    fitFunction     = GetValue(d, 'meta.method', {"no fit function found"}); % "Langmuir";
+    fitFunctionH    = GetValue(d, 'meta.methodFunc', 0); % function handle
+    fitFunctionEx   = GetValue(d, 'meta.methodEx', {"no ex for fit function found"}); % "b*(1-e^(-(k*(x-t))";
+    
+    n_rounds        = GetValue(d, 'meta.n_rounds', 2); % 2; 
+    nRoundsStr      = convertCharsToStrings(num2str(n_rounds));
+
+    n_sensors       = GetValue(d, 'meta.n_sensors', 8); % 8;
+
+    data            = GetValue(d, 'raw', table());
+
+    drift_sp_T = cell(n_rounds, n_sensors); sp_corr_T = cell(n_rounds, n_sensors); best_a_T = cell(n_rounds, n_sensors); best_b_T = cell(n_rounds, n_sensors); rsquared_T = cell(n_rounds, n_sensors);
+    for r = 1:n_rounds
+        round = "round" + r;
+        for s = 1:n_sensors
+            sensor = "sensor" + s;
+            drift_sp_T{r, s}    = GetValue(d, char(round + "." + sensor + "." + "driftSP"), NaN); % d.(round).(sensor).driftSP
+            sp_corr_T{r, s}     = GetValue(d, char(round + "." + sensor + "." + "SPcorr"), NaN); % d.(round).(sensor).SPcorr
+            best_a_T{r, s}      = GetValue(d, char(round + "." + sensor + "." + "a"), NaN); % d.(round).(sensor).a
+            best_b_T{r, s}      = GetValue(d, char(round + "." + sensor + "." + "b"), NaN); % d.(round).(sensor).b
+            rsquared_T{r, s}    = GetValue(d, char(round + "." + sensor + "." + "Rsquared"), NaN); % d.(round).(sensor).Rsquared;
+        end
+    end
+
+    %% get values from keys. second last arg is expected type. last arg is default value if the key is missing from varagin/KeyList or unvalid type
+
+    plotCorrType    = GetValueByKey(KeyList, ValList, 'plotCorrType', 'double', 1);
+    plotUncorrType  = GetValueByKey(KeyList, ValList, 'plotUncorrType', 'double', NaN);
+    plotUncorrToo   = GetValueByKey(KeyList, ValList, 'plotUncorrToo', 'double', 1);
+    plotFitToo      = GetValueByKey(KeyList, ValList, 'plotFitToo', 'double', 1);
+    plotType        = GetValueByKey(KeyList, ValList, 'plotType', 'double', 0);
+
+    plotSensors     = GetValueByKey(KeyList, ValList, 'plotSensors', 'double', [1:n_sensors]);
+    plotRounds      = GetValueByKey(KeyList, ValList, 'plotRounds', 'double', [1:n_rounds]);
+
+    %% style vars
+    colmap = jet(8);
+
+    %% MAIN
+
+    switch plotType
+
+        case 1
+            return;
+
+        otherwise % default case %% case 0
+
+            for r = plotRounds
+                round = "round" + r;
+
+                clf(figure(r)); % clear figure
+                H{r} = figure(r); % create figure for round
+                fig_handles = []; % create empty array for handles
+        
+                % load data
+                pltData = data(data.round == r & (data.inj_type == relInj | data.inj_type == plotCorrType), :);  
+                plttgLength = height(data);
+
+                relInjEnd = find(diff(pltData.inj_type) ~= 0) + 1;
+        
+                for s = plotSensors
+                    sensor = "sensor" + s; 
+                    sensor_name = pltData.Properties.VariableNames{s+4};
+        
+                    strVal  = GetValue(d, char(round + "." + sensor + "." + "strVal"), 0);
+        
+                    if plotUncorrToo
+                        % plot raw data corrected by strVal
+                        plot(pltData.T_s_, pltData{:, s+4} - strVal, Color = colmap(s, :), Marker = 'none', LineStyle = '--', HandleVisibility = 'off'); hold on;
+                        
+                    end
+                    
+        
+                    % calc model
+                    t_rel = (1:(length(pltData.T_s_) - drift_sp_T{r, s} + 1))';
+                    model = fitFunctionH;
+                    y_model = model(best_a_T{r, s}, best_b_T{r, s}, t_rel);
+        
+                    % add zeros at beginning and strVal correction 
+                    y_model = [zeros(drift_sp_T{r, s}-1, 1); y_model];
+        
+                    if plotFitToo
+                        % plot fit
+                        plot(pltData.T_s_, y_model, ':k', Marker = 'none', HandleVisibility = 'off')
+                    end
+        
+                    % plot result
+                    h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = 'none', LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data");
+                    fig_handles = [fig_handles h];
+                
+                end
+
+                if plotUncorrToo
+                    h = plot(NaN, NaN, Color = 'k', Marker = 'none', LineStyle = '--', DisplayName = "Uncorrected (raw) data"); % handle for legend
+                    fig_handles = [fig_handles h];
+                end
+
+                if plotFitToo
+                    h = plot(NaN, NaN, Color = 'k', Marker = 'none', LineStyle = ':', DisplayName = "Data fit"); % handle for legend
+                    fig_handles = [fig_handles h];
+                end
+                
+                yline(0, Color = 'k', LineStyle = '--', HandleVisibility = 'off'); % add 0 base line
+                xline(pltData.T_s_(relInjEnd), Color = 'k', LineStyle = '--', HandleVisibility = 'off', Label = GetInjectionType(plotCorrType));
+
+                title(shortFileId + " (round " + 1 + "/" + n_rounds + "): correcting " + GetInjectionType(plotCorrType) + " w/ drift from " + GetInjectionType(relInj));
+                legend(fig_handles, 'Location', 'best');
+
+                hold off;
+            end
+    end
+
+else
+    error("[ERROR][printddindd] input is not of type ddindd (output struct from ddindd function)")
+end
+end
+
+%% GetValue: get value from struct or, if not available, set default
+%
+% Args:
+%       s (struct): struct where input is from
+%       path (char): path to relevant struct field ex.: 'path1.path2'}
+%       defaultValue (any): default value, if value from struct not available
+%
+% Returns:
+%       value (any): value to use
+%
+function value = GetValue(s, path, defaultValue)
+    keys = strsplit(path, '.');
+    try
+        value = getfield(s, keys{:});
+    catch
+        value = defaultValue;
+    end
+end
+
+%% GetValueByKey: return default value if field is missing from opt or wrong type
+%
+% Args:
+%       KeyList (cell): List of keys from varargin input
+%       ValList (cell): List of values from varargin input
+%       key (char): name of key
+%       expectedType (char): expected type of value
+%       defaultValue (any): default value (if no val in ValList)
+%
+% Result:
+%       value (any): from ValList if available and correct type, else defaultValue
+%
+function value = GetValueByKey(KeyList, ValList, key, expectedType, defaultValue)
+    idx = find(strcmp(KeyList,lower(key)));
+    if isempty(idx) 
+        value = defaultValue;
+    else
+        value = ValList{idx(1)};
+        if ~isa(value, expectedType)
+            value = defaultValue;
+        end
+    end
+end
+
+%% GetInjectionType: Return injection type
+%
+% Args:
+%       i (int): injection type integer
+%
+% Result:
+%       inj_type (string): injection type string
+%
+function inj_type = GetInjectionType(i)
+    switch i
+        case 0
+            inj_type = "Negative sample";
+        case 1
+            inj_type = "Positive sample";
+        case 3
+            inj_type = "Flush";
+        case 4
+            inj_type = "Urea";
+        otherwise
+            inj_type = "Unknown";
+    end
+end
