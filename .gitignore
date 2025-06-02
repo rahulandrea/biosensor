@@ -1,11 +1,12 @@
 /literature/
 /jupiter/
-/documentation/
+/documentation/more/
+
 /matlab/output/
 /matlab/data/
 /matlab/playgrounds/
 
-/documentation/more/
+
 
 # OS generated files
 .DS_Store
