@@ -10,7 +10,7 @@ function H = plotddindd(d, varargin)
 %       plotFitToo (bool): should fit function plotted too (default = 0)
 %       plotType (int): plot design for output (default = 0)
 %
-%       plotColorType (int): plot design color (default = 0 (red/black), 1 (different colors)) 
+%       plotColorType (int): plot design color (default = 
 %
 %       plotSensors (cell array): plot only these sensors (default = [1:n_sensors])
 %       plotRounds (cell array): plot only these sensors (default = [1:n_rounds])
@@ -69,28 +69,18 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
     plotFitToo      = GetValueByKey(KeyList, ValList, 'plotFitToo', 'double', 1);
     plotType        = GetValueByKey(KeyList, ValList, 'plotType', 'double', 0);
 
-    plotColorType   = GetValueByKey(KeyList, ValList, 'plotColorType', 'double', 0);
-
     plotSensors     = GetValueByKey(KeyList, ValList, 'plotSensors', 'double', [1:n_sensors]);
     plotRounds      = GetValueByKey(KeyList, ValList, 'plotRounds', 'double', [1:n_rounds]);
 
     %% style vars
-    switch plotColorType
-        case 1
-            colmap = jet(8);
-            col_case = 1;
-        otherwise % default case %% case 0
-            colmap = repmat([1 0 0; 0 0 0], n_sensors, 1);
-            col_case = 0;
-    end
-
-    markermap = {'o', '+', 'square', 'x', 'diamond', '*', '^', '|', '>', '<', 'v', 'hexagram', '.'};
+    colmap = jet(8);
 
     %% MAIN
 
     switch plotType
 
         case 1
+            return;
 
         otherwise % default case %% case 0
 
@@ -134,12 +124,7 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
                     end
         
                     % plot result
-                    switch col_case
-                        case 0
-                            h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = 'none', LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data"); 
-                        otherwise 
-                            h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = markermap(s, :), LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data");
-                    end
+                    h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = 'none', LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data");
                     fig_handles = [fig_handles h];
                 
                 end
@@ -155,12 +140,9 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
                 end
                 
                 yline(0, Color = 'k', LineStyle = '--', HandleVisibility = 'off'); % add 0 base line
-
-                xline(pltData.T_s_(1), Color = 'k', LineStyle = '--', HandleVisibility = 'off', Label = GetInjectionType(relInj));
                 xline(pltData.T_s_(relInjEnd), Color = 'k', LineStyle = '--', HandleVisibility = 'off', Label = GetInjectionType(plotCorrType));
 
                 title(shortFileId + " (round " + 1 + "/" + n_rounds + "): correcting " + GetInjectionType(plotCorrType) + " w/ drift from " + GetInjectionType(relInj));
-                xlabel("time [s]"); ylabel("raw signal [nm]");
                 legend(fig_handles, 'Location', 'best');
 
                 hold off;
