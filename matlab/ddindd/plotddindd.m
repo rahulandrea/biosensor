@@ -11,6 +11,7 @@ function H = plotddindd(d, varargin)
 %       plotType (int): plot design for output (default = 0)
 %
 %       plotColorType (int): plot design color (default = 0 (red/black), 1 (different colors)) 
+%       plotMarker (bool): should markers be added (default = NaN; then depends on plotColorType) 
 %
 %       plotSensors (cell array): plot only these sensors (default = [1:n_sensors])
 %       plotRounds (cell array): plot only these sensors (default = [1:n_rounds])
@@ -70,6 +71,7 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
     plotType        = GetValueByKey(KeyList, ValList, 'plotType', 'double', 0);
 
     plotColorType   = GetValueByKey(KeyList, ValList, 'plotColorType', 'double', 0);
+    plotMarker      = GetValueByKey(KeyList, ValList, 'plotMarker', 'double', NaN);
 
     plotSensors     = GetValueByKey(KeyList, ValList, 'plotSensors', 'double', [1:n_sensors]);
     plotRounds      = GetValueByKey(KeyList, ValList, 'plotRounds', 'double', [1:n_rounds]);
@@ -78,10 +80,14 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
     switch plotColorType
         case 1
             colmap = jet(8);
-            col_case = 1;
+            if isnan(plotMarker)
+                plotMarker = 0;
+            end
         otherwise % default case %% case 0
             colmap = repmat([1 0 0; 0 0 0], n_sensors, 1);
-            col_case = 0;
+            if isnan(plotMarker)
+                plotMarker = 1;
+            end
     end
 
     markermap = {'o', '+', 'square', 'x', 'diamond', '*', '^', '|', '>', '<', 'v', 'hexagram', '.'};
@@ -134,11 +140,10 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
                     end
         
                     % plot result
-                    switch col_case
-                        case 0
-                            h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = 'none', LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data"); 
-                        otherwise 
-                            h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = markermap(s, :), LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data");
+                    if plotMarker
+                        h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = markermap{s}, LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data"); 
+                    else
+                        h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = 'none', LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data");
                     end
                     fig_handles = [fig_handles h];
                 
