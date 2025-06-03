@@ -1,0 +1,68 @@
+%% PROJECT SETUP
+%
+%   exit code
+%       0  -  all tests passed
+%       
+%
+disp("[INFO][setup] Starting environment test ...");
+
+%% RBEAST
+y   = sin((1:100)/10);  % dummy data
+try
+    result = beast(y);
+    disp('[PASSED] Rbeast installed and running');
+catch ME
+    disp('[FAILED] Rbeast failed:');
+    disp(ME.message);
+    exit(4);
+end
+
+
+
+
+y   = sin((1:100)/10); % example data
+
+try
+    result  = beast(y); 
+    code    = 1;
+catch ME
+    disp("[ERROR][setup] Setup failed:");
+    disp(ME.message);
+    code    = 0;
+end
+
+exit(code);
+
+
+
+disp('[SETUP] Starting environment test ...');
+
+%% 1. Test: Rbeast
+disp('[SETUP] Testing Rbeast installation...');
+y = sin((1:100)/10);  % Dummy signal
+try
+    result = beast(y);
+    disp('[✓] Rbeast installed and running.');
+catch ME
+    disp('[✗] Rbeast failed:');
+    disp(ME.message);
+    exit(1);
+end
+
+%% 2. Add and test your algorithm
+disp('[SETUP] Adding ddindd to path ...');
+try
+    addpath('ddindd');  % Relative path inside the Docker image (/matlab/ddindd)
+
+    % Optional test call — nur sinnvoll, wenn ddindd ohne Argumente lauffähig ist
+    disp('[SETUP] Testing ddindd...');
+    ddindd();  % Wenn Argumente benötigt werden, hier entsprechend anpassen
+    disp('[✓] ddindd ran successfully.');
+catch ME
+    disp('[✗] ddindd failed:');
+    disp(ME.message);
+    exit(1);
+end
+
+disp('[SETUP] All checks passed.');
+exit(0);
