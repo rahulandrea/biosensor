@@ -6,17 +6,26 @@ function H = plotddindd(d, varargin)
 %   optional:
 %       plotCorrType (int): which injection type should be plotted too with correction (default = 1)
 %       plotUncorrType (int): which injection type should be plotted too without correction (default = NaN)
-%       plotUncorrToo (bool): should uncorrected drift be plotted too (default = 1)
+%       plotUncorrToo (bool): should uncorrected drift be plotted too (default = 0)
 %       plotFitToo (bool): should fit function plotted too (default = 0)
-%       plotType (int): plot design for output (default = 0)
 %
-%       plotColorType (int): plot design color (default = 0 (red/black), 1 (different colors)) 
+%       plotType (int): plot design for output (default = 0)
+%           possibile options:
+%               0: plot negative sample and positive sample
+%               1: plot only positive sample but w/ corrections from negative sample and correct to zero at 
+%                  beginning of positive sample
+%
 %       plotMarker (bool): should markers be added (default = NaN; then depends on plotColorType) 
+%       plotColorType (int): plot design color (default = 0) 
+%           possible options:
+%               0: red and black
+%               1: different color for each sensor (blue - brown)           
 %
 %       plotSensors (cell array): plot only these sensors (default = [1:n_sensors])
 %       plotRounds (cell array): plot only these sensors (default = [1:n_rounds])
 %
 % Results:
+%       ans (cell): cell array of figures
 %
 if isstruct(d) && strcmp(d.meta.type, 'ddindd')
     %% parse second argument (option parameter)
@@ -66,8 +75,9 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
 
     plotCorrType    = GetValueByKey(KeyList, ValList, 'plotCorrType', 'double', 1);
     plotUncorrType  = GetValueByKey(KeyList, ValList, 'plotUncorrType', 'double', NaN);
-    plotUncorrToo   = GetValueByKey(KeyList, ValList, 'plotUncorrToo', 'double', 1);
-    plotFitToo      = GetValueByKey(KeyList, ValList, 'plotFitToo', 'double', 1);
+    plotCorrToo     = GetValueByKey(KeyList, ValList, 'plotCorrToo', 'double', 1);
+    plotUncorrToo   = GetValueByKey(KeyList, ValList, 'plotUncorrToo', 'double', 0);
+    plotFitToo      = GetValueByKey(KeyList, ValList, 'plotFitToo', 'double', 0);
     plotType        = GetValueByKey(KeyList, ValList, 'plotType', 'double', 0);
 
     plotColorType   = GetValueByKey(KeyList, ValList, 'plotColorType', 'double', 0);
@@ -84,7 +94,7 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
                 plotMarker = 0;
             end
         otherwise % default case %% case 0
-            colmap = repmat([1 0 0; 0 0 0], n_sensors, 1);
+            colmap = repmat([1 0 0; 0 0 1], n_sensors, 1);
             if isnan(plotMarker)
                 plotMarker = 1;
             end
@@ -98,55 +108,148 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
 
         case 1
 
+            for r = plotRounds
+                round = "round" + r;
+
+                clf(figure(r));             % clear figure
+                H{r}        = figure(r);    % create figure for round
+                fig_handles = [];           % create empty array for handles
+
+                % load data
+                pltData     = data(data.round == r & (data.inj_type == relInj | data.inj_type == plotCorrType), :);  
+                plttgLength = height(data);
+            
+                relInjEnd   = find(diff(pltData.inj_type) ~= 0) + 1;
+
+                for s = plotSensors
+                    sensor      = "sensor" + s; 
+                    sensor_name = pltData.Properties.VariableNames{s+4};
+        
+                    strVal      = GetValue(d, char(round + "." + sensor + "." + "strVal"), 0);
+
+                    posBeginn   = find(diff(pltData.inj_type == plotCorrType) == 1) + 1;
+                    posStrVal   = pltData{posBeginn, s+4};
+        
+                    if plotUncorrToo
+                        % plot raw data corrected by strVal
+                        if plotMarker
+                            plot(pltData{posBeginn:end, "T_s_"}, pltData{posBeginn:end, s+4} - posStrVal, Color = colmap(s, :), Marker = markermap{s}, LineStyle = '--', HandleVisibility = 'off'); hold on;
+                        else
+                            plot(pltData{posBeginn:end, "T_s_"}, pltData{posBeginn:end, s+4} - posStrVal, Color = colmap(s, :), Marker = 'none', LineStyle = '--', HandleVisibility = 'off'); hold on;
+                        end
+                    end
+        
+                    % calc model
+                    t_rel       = (1:(length(pltData.T_s_) - drift_sp_T{r, s} + 1))';
+                    model       = fitFunctionH;
+                    y_model     = model(best_a_T{r, s}, best_b_T{r, s}, t_rel);
+        
+                    % add zeros at beginning and strVal correction 
+                    y_model     = [zeros(drift_sp_T{r, s}-1, 1); y_model];
+        
+                    if plotFitToo
+                        % plot fit
+                        if plotMarker
+                            plot(pltData{posBeginn:end, "T_s_"}, y_model(posBeginn:end), ':k', Marker = markermap{s}, HandleVisibility = 'off');
+                        else
+                            plot(pltData{posBeginn:end, "T_s_"}, y_model(posBeginn:end), ':k', Marker = 'none', HandleVisibility = 'off');
+                        end
+                    end
+        
+                    % plot result
+                    if plotCorrToo || (~plotCorrToo && ~plotUncorrToo && ~plotFitToo)
+                        if plotMarker
+                            h = plot(pltData{posBeginn:end, "T_s_"}, pltData{posBeginn:end, s+4} - y_model(posBeginn:end) - posStrVal + y_model(posBeginn), Color = colmap(s, :), Marker = markermap{s}, LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data"); hold on; 
+                        else
+                            h = plot(pltData{posBeginn:end, "T_s_"}, pltData{posBeginn:end, s+4} - y_model(posBeginn:end) - posStrVal + y_model(posBeginn), Color = colmap(s, :), Marker = 'none', LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data"); hold on;
+                        end
+                    else
+                        if plotMarker
+                            h = plot(NaN, NaN, Color = colmap(s, :), Marker = markermap{s}, LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name); hold on;
+                        else
+                            h = plot(NaN, NaN, Color = colmap(s, :), Marker = 'none', LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name); hold on;
+                        end
+                    end
+                    fig_handles = [fig_handles h];
+                end
+
+                if plotUncorrToo
+                    h = plot(NaN, NaN, Color = 'k', Marker = 'none', LineStyle = '--', DisplayName = "Uncorrected (raw) data"); % handle for legend
+                    fig_handles = [fig_handles h];
+                end
+
+                if plotFitToo
+                    h = plot(NaN, NaN, Color = 'k', Marker = 'none', LineStyle = ':', DisplayName = "Data fit"); % handle for legend
+                    fig_handles = [fig_handles h];
+                end
+                
+                yline(0, Color = 'k', LineStyle = '--', HandleVisibility = 'off'); % add 0 base line
+
+                xline(pltData.T_s_(posBeginn), Color = 'k', LineStyle = '--', HandleVisibility = 'off', Label = GetInjectionType(plotCorrType));
+
+                title(shortFileId + " (round " + r + "/" + n_rounds + "): correcting " + GetInjectionType(plotCorrType) + " w/ drift from " + GetInjectionType(relInj));
+                xlabel("time [s]"); ylabel("raw signal [nm]");
+                legend(fig_handles, 'Location', 'best');
+
+                hold off;
+
+            end
+
         otherwise % default case %% case 0
 
             for r = plotRounds
                 round = "round" + r;
 
-                clf(figure(r)); % clear figure
-                H{r} = figure(r); % create figure for round
-                fig_handles = []; % create empty array for handles
+                clf(figure(r));             % clear figure
+                H{r}        = figure(r);    % create figure for round
+                fig_handles = [];           % create empty array for handles
         
                 % load data
-                pltData = data(data.round == r & (data.inj_type == relInj | data.inj_type == plotCorrType), :);  
+                pltData     = data(data.round == r & (data.inj_type == relInj | data.inj_type == plotCorrType), :);  
                 plttgLength = height(data);
 
-                relInjEnd = find(diff(pltData.inj_type) ~= 0) + 1;
+                relInjEnd   = find(diff(pltData.inj_type) ~= 0) + 1;           
         
                 for s = plotSensors
-                    sensor = "sensor" + s; 
+                    sensor      = "sensor" + s; 
                     sensor_name = pltData.Properties.VariableNames{s+4};
         
-                    strVal  = GetValue(d, char(round + "." + sensor + "." + "strVal"), 0);
+                    %strVal      = GetValue(d, char(round + "." + sensor + "." + "strVal"), 0);
+                    strVal      = pltData{drift_sp_T{r, s}, s+4};
         
                     if plotUncorrToo
                         % plot raw data corrected by strVal
-                        plot(pltData.T_s_, pltData{:, s+4} - strVal, Color = colmap(s, :), Marker = 'none', LineStyle = '--', HandleVisibility = 'off'); hold on;
-                        
+                        if plotMarker
+                            plot(pltData.T_s_, pltData{:, s+4} - strVal, Color = colmap(s, :), Marker = markermap{s}, LineStyle = '--', HandleVisibility = 'off'); hold on;
+                        else
+                            plot(pltData.T_s_, pltData{:, s+4} - strVal, Color = colmap(s, :), Marker = 'none', LineStyle = '--', HandleVisibility = 'off'); hold on;
+                        end
                     end
-                    
         
                     % calc model
-                    t_rel = (1:(length(pltData.T_s_) - drift_sp_T{r, s} + 1))';
-                    model = fitFunctionH;
-                    y_model = model(best_a_T{r, s}, best_b_T{r, s}, t_rel);
+                    t_rel       = (1:(length(pltData.T_s_) - drift_sp_T{r, s} + 1))';
+                    model       = fitFunctionH;
+                    y_model     = model(best_a_T{r, s}, best_b_T{r, s}, t_rel);
         
                     % add zeros at beginning and strVal correction 
-                    y_model = [zeros(drift_sp_T{r, s}-1, 1); y_model];
+                    y_model     = [zeros(drift_sp_T{r, s}-1, 1); y_model];
         
                     if plotFitToo
                         % plot fit
-                        plot(pltData.T_s_, y_model, ':k', Marker = 'none', HandleVisibility = 'off')
+                        if plotMarker
+                            plot(pltData.T_s_, y_model, ':k', Marker = markermap{s}, HandleVisibility = 'off'); hold on;
+                        else
+                            plot(pltData.T_s_, y_model, ':k', Marker = 'none', HandleVisibility = 'off'); hold on;
+                        end
                     end
         
                     % plot result
                     if plotMarker
-                        h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = markermap{s}, LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data"); 
+                        h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = markermap{s}, LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data"); hold on; 
                     else
-                        h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = 'none', LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data");
+                        h = plot(pltData.T_s_, pltData{:, s+4} - y_model - strVal, Color = colmap(s, :), Marker = 'none', LineStyle = '-', LineWidth = 1.5, DisplayName = sensor_name + ": corrected data"); hold on;
                     end
                     fig_handles = [fig_handles h];
-                
                 end
 
                 if plotUncorrToo
@@ -164,12 +267,14 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
                 xline(pltData.T_s_(1), Color = 'k', LineStyle = '--', HandleVisibility = 'off', Label = GetInjectionType(relInj));
                 xline(pltData.T_s_(relInjEnd), Color = 'k', LineStyle = '--', HandleVisibility = 'off', Label = GetInjectionType(plotCorrType));
 
-                title(shortFileId + " (round " + 1 + "/" + n_rounds + "): correcting " + GetInjectionType(plotCorrType) + " w/ drift from " + GetInjectionType(relInj));
+                title(shortFileId + " (round " + r + "/" + n_rounds + "): correcting " + GetInjectionType(plotCorrType) + " w/ drift from " + GetInjectionType(relInj));
                 xlabel("time [s]"); ylabel("raw signal [nm]");
                 legend(fig_handles, 'Location', 'best');
 
                 hold off;
+
             end
+
     end
 
 else

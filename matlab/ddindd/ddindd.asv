@@ -279,7 +279,7 @@ for r = 1:n_rounds
 
         cpt = 20;
 
-        y_fit = y(cpt:end); % part on which we want to fit the model function
+        y_fit = y(20:end); % part on which we want to fit the model function
         y_fit = y_fit - y_fit(1); % set starting value to 0
         t_rel = (1:length(y_fit))'; % relative time vector on that part
 
@@ -292,7 +292,41 @@ for r = 1:n_rounds
             disp("[INFO][func fit (round: " + r + "sensor: " + s + ")] No fitting possible. Array is to short.")
             opt_a = NaN; opt_b = NaN; r2 = NaN; % dummy vars
         end
+
         
+
+
+
+        % o = beast(y, season = 'none');
+        % cpts = o.trend.cp(~isnan(o.trend.cp)); cpts = cpts(1:3); % top 3 possible changepoints
+        % prob = o.trend.cpPr(~isnan(o.trend.cp)); prob = prob(1:3); % and respective probabilities
+        % 
+        % % fitting %% find best cpt
+        % cpts_r2 = zeros(1, length(cpts)); cpts_opt_a = zeros(1, length(cpts)); cpts_opt_b = zeros(1, length(cpts));
+        % 
+        % for i = 1:length(cpts) % iterate over top 3 possibile cpts
+        %     curr_cpt = cpts(i);
+        %     y_fit = y(curr_cpt:end); % part on which we want to fit the model function
+        %     y_fit = y_fit - y_fit(1); % set starting value to 0
+        %     t_rel = (1:length(y_fit))'; % relative time vector on that part
+        % 
+        %     if length(y_fit) > 10 % minmum requirement to fit model function
+        %         a0 = 1 / mean(t_rel(end)); b0 = max(y_fit); % chose starting points for optimization
+        %         opts = fitoptions(Method = 'NonlinearLeastSquares', StartPoint = [a0, b0], Lower = [0, 0]); % define parameters for fit
+        %         [fitted_model, gof] = fit(t_rel, y_fit, ft, opts); % fit model
+        %         cpts_opt_a(i) = fitted_model.a; cpts_opt_b(i) = fitted_model.b; cpts_r2(i) = gof.rsquare; % save function parameters for fit w/ this cpt
+        %     else
+        %         disp("[INFO][func fit (round: " + r + "sensor: " + s + ")] No fitting possible. Array is to short.")
+        %     end
+        % end
+        % 
+        % cpts_length = (abs(- cpts + length(y)/3)) .^ (-.3); % inverse of distance to third
+        % cpts_score = cpts_r2 .* prob' .* cpts_length'; % score is product of r2, prob and cpts length 
+        % [~, idx] = max(cpts_score); % find the best cpt
+        % cpt = cpts(idx); opt_a = cpts_opt_a(idx); opt_b = cpts_opt_b(idx); r2 = cpts_r2(idx);
+
+        
+
         % save array and strVal in struct
         out.(roundName).(sensorName).y = y;
         out.(roundName).(sensorName).strVal = strVal;

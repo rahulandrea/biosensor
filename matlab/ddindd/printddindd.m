@@ -72,85 +72,85 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
     length_ln8 = 2 + 9 + strlength(GetInjectionType(relInj)) + 4;
     space_at_front = ceil((line_width - length_ln8 - 1) / 2);
     space_at_end = line_width - (length_ln8 + space_at_front);
-    fprintf('# %*s %s %*s # \n',space_at_front ,'', ["DRIFT IN " + upper(GetInjectionType(relInj))], space_at_end, '') %%% ln 8
+    fprintf('# %*s %s %*s #\n',space_at_front ,'', ["DRIFT IN " + upper(GetInjectionType(relInj))], space_at_end, '') %%% ln 8
 
     % function for fit
     length_ln9 = 2 + 24 + strlength(fitFunction) + 4 + strlength(fitFunctionEx) + 2;
     if length_ln9 < line_width % if there is space for fit function example
         space_at_end = line_width - length_ln9 - 1;
-        fprintf('# %s %*s # \n', ["Chosen function for fit: " + fitFunction + " (" + fitFunctionEx + ")"], space_at_end, '') %%% ln 9
+        fprintf('# %s %*s #\n', ["Chosen function for fit: " + fitFunction + " (" + fitFunctionEx + ")"], space_at_end, '') %%% ln 9
     else
         space_at_end = line_width - length_ln9 + 3 + strlength(fitFunctionEx) - 1;
-        fprintf('# %s %*s # \n', ["Chosen function for fit: " + fitFunction], space_at_end, '') %%% ln 9 
+        fprintf('# %s %*s #\n', ["Chosen function for fit: " + fitFunction], space_at_end, '') %%% ln 9 
         %%%% TODO: fitFunctionEx in ln 9b
     end
     
     % n detected rounds
     length_ln10 = 2 + 17 + strlength(nRoundsStr) + 2;
     space_at_end = line_width - length_ln10 - 1;
-    fprintf('# %s %*s # \n', ["Detected rounds: " + nRoundsStr], space_at_end, '') %%% ln 10
+    fprintf('# %s %*s #\n', ["Detected rounds: " + nRoundsStr], space_at_end, '') %%% ln 10
 
     disp(repmat('#', 1 , line_width)); %%% ln 11
 
     %% MAIN
 
     for r = 1:n_rounds
-        fprintf('.%s. \n', repmat('-', 1, line_width - 2)); % ln 12
+        fprintf('.%s.\n', repmat('-', 1, line_width - 2)); % ln 12
         
         % which round
         length_ln13 = 2 + 7 + length(num2str(r)) + 4;
         space_at_front = ceil((line_width - length_ln13) / 2);
         space_at_end = line_width - (length_ln13 + space_at_front);
-        fprintf('| %*s %s %*s | \n', space_at_front, '', ["Round: " + r], space_at_end, ''); %%% ln 13
+        fprintf('| %*s %s %*s |\n', space_at_front, '', ["Round: " + r], space_at_end, ''); %%% ln 13
 
-        fprintf('|%s| \n', repmat('-', 1, line_width - 2)); % ln 14
+        fprintf('|%s|\n', repmat('-', 1, line_width - 2)); % ln 14
 
         % sensor table
         space_at_front = line_width - 2 - 7 - 55 - 3;
-        fprintf('| %*s %s %54s | \n', space_at_front, '', ["Sensor:"], ''); %ln 15
+        fprintf('| %*s %s %54s |\n', space_at_front, '', ["Sensor:"], ''); %ln 15
         space_at_front = line_width - 2 - 66;
-        fprintf('| %*s | 1     | 2     | 3     | 4     | 5     | 6     | 7     | 8     | \n', space_at_front, '') % ln 16
+        fprintf('| %*s | 1     | 2     | 3     | 4     | 5     | 6     | 7     | 8     |\n', space_at_front, '') % ln 16
 
         % length of numbers in table 
         l = 5;
 
         % Drift SP
-        fprintf( '| Drift SP  | %s | %s | %s | %s | %s | %s | %s | %s | \n', ...
+        fprintf( '| Drift SP  | %s | %s | %s | %s | %s | %s | %s | %s |\n', ...
             formatN(drift_sp_T{r,1}, l, warnings_list), formatN(drift_sp_T{r,2}, l, warnings_list), ...
             formatN(drift_sp_T{r,3}, l,warnings_list), formatN(drift_sp_T{r,4}, l, warnings_list), ...
             formatN(drift_sp_T{r,5}, l, warnings_list), formatN(drift_sp_T{r,6}, l, warnings_list), ...
             formatN(drift_sp_T{r,7}, l, warnings_list), formatN(drift_sp_T{r,8}, l, warnings_list) ) % ln 17
         
         % SP corr
-        fprintf( '| SP corr   | %s | %s | %s | %s | %s | %s | %s | %s | \n', ...
+        fprintf( '| SP corr   | %s | %s | %s | %s | %s | %s | %s | %s |\n', ...
             formatN(sp_corr_T{r,1}, l, warnings_list), formatN(sp_corr_T{r,2}, l, warnings_list), ...
             formatN(sp_corr_T{r,3}, l, warnings_list), formatN(sp_corr_T{r,4}, l, warnings_list), ...
             formatN(sp_corr_T{r,5}, l, warnings_list), formatN(sp_corr_T{r,6}, l, warnings_list), ...
             formatN(sp_corr_T{r,7}, l, warnings_list), formatN(sp_corr_T{r,8}, l, warnings_list) ) % ln 18
 
         % Best a
-        fprintf( '| Best a    | %s | %s | %s | %s | %s | %s | %s | %s | \n', ...
+        fprintf( '| Best a    | %s | %s | %s | %s | %s | %s | %s | %s |\n', ...
             formatN(best_a_T{r,1}, l, warnings_list), formatN(best_a_T{r,2}, l, warnings_list), ...
             formatN(best_a_T{r,3}, l, warnings_list), formatN(best_a_T{r,4}, l, warnings_list), ...
             formatN(best_a_T{r,5}, l, warnings_list), formatN(best_a_T{r,6}, l, warnings_list), ...
             formatN(best_a_T{r,7}, l, warnings_list), formatN(best_a_T{r,8}, l, warnings_list) ) % ln 19
 
         % Best b
-        fprintf( '| Best b    | %s | %s | %s | %s | %s | %s | %s | %s | \n', ...
+        fprintf( '| Best b    | %s | %s | %s | %s | %s | %s | %s | %s |\n', ...
             formatN(best_b_T{r,1}, l, warnings_list), formatN(best_b_T{r,2}, l, warnings_list), ...
             formatN(best_b_T{r,3}, l, warnings_list), formatN(best_b_T{r,4}, l, warnings_list), ...
             formatN(best_b_T{r,5}, l, warnings_list), formatN(best_b_T{r,6}, l, warnings_list), ...
             formatN(best_b_T{r,7}, l, warnings_list), formatN(best_b_T{r,8}, l, warnings_list) ) % ln 20
 
         % Rsquared
-        fprintf( '| R^2       | %s | %s | %s | %s | %s | %s | %s | %s | \n', ...
+        fprintf( '| R^2       | %s | %s | %s | %s | %s | %s | %s | %s |\n', ...
             formatN(rsquared_T{r,1}, l, warnings_list), formatN(rsquared_T{r,2}, l, warnings_list), ...
             formatN(rsquared_T{r,3}, l, warnings_list), formatN(rsquared_T{r,4}, l, warnings_list), ...
             formatN(rsquared_T{r,5}, l, warnings_list), formatN(rsquared_T{r,6}, l, warnings_list), ...
             formatN(rsquared_T{r,7}, l, warnings_list), formatN(rsquared_T{r,8}, l, warnings_list) ) % ln 20
     end
 
-    fprintf('.%s. \n', repmat('-', 1, line_width - 2)); % ln 21
+    fprintf('.%s.\n', repmat('-', 1, line_width - 2)); % ln 21
     
     %% HINTS AND WARNINGS
 
@@ -159,12 +159,12 @@ if isstruct(d) && strcmp(d.meta.type, 'ddindd')
     end
 
     dispstr = "[HINT] Use 'plotddindd()' to plot drift approximation";
-    fprintf('| %s %*s | \n', dispstr, line_width - (length(convertStringsToChars(dispstr)) + 5), '') % ln 23 a
+    fprintf('| %s %*s |\n', dispstr, line_width - (length(convertStringsToChars(dispstr)) + 5), '') % ln 23 a
 
     dispstr = "[HINT] Use 'help ddindd' for help";
-    fprintf('| %s %*s | \n',dispstr, line_width - (length(convertStringsToChars(dispstr)) + 5), '') % ln 23 b
+    fprintf('| %s %*s |\n',dispstr, line_width - (length(convertStringsToChars(dispstr)) + 5), '') % ln 23 b
 
-    fprintf('.%s. \n', repmat('-', 1, line_width - 2)); % ln 24
+    fprintf('.%s.\n', repmat('-', 1, line_width - 2)); % ln 24
     
 else
     error("[ERROR][printddindd] input is not of type ddindd (output struct from ddindd function)")
