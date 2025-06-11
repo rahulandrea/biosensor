@@ -188,8 +188,6 @@ else
     rounds                  = GetValue(metaFile, 'rounds', []);
 end
 
-
-
 %% prepare data and set metadata
 
 % set fit type
@@ -227,7 +225,7 @@ out.meta.relInj = relInj; % save in output struct
 % create inj_type column
 inj_type = 8 * ones(height(data), 1); % default: 8 %% error type
 for i = 1:length(injections)
-    inj_type(data.("Val_") == i) = injections(i);
+    inj_type(data.("Inj_") == i) = injections(i);
 end
 data.inj_type = inj_type;
 
