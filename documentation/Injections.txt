@@ -1,0 +1,26 @@
+10 Minutes Buffer
+10 Minutes Sample
+8  Minutes Urea
+
+Injections   Valve
+0   Buffer   1
+10  Sample   2
+20  Urea     3
+28  Buffer   1
+38  Sample   2
+48  Urea     3
+56  Buffer   1
+66  Sample   2
+76  Urea     3
+84  Buffer   1
+94  Sample   2
+104 Urea     3
+112 Buffer   1
+122 Sample   2
+132 Urea     3
+140 Buffer   1
+150 Sample   2
+160 Urea     3
+168 Buffer   1
+178 Sample   2
+188 Urea     3
