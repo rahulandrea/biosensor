@@ -1,9 +1,13 @@
 import pandas as pd
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import os
 import plotly.express as px
 import plotly.graph_objs as go
+import itertools
+import plotly.colors as pc
 from plotly.subplots import make_subplots
 
 def convert_raw_to_csv(input_path, output_path, delimiter="\t", skiprows=0, header='infer'):
@@ -460,3 +464,30 @@ def plot_normalized_injections(df, sensor_name):
 
     # Plot anzeigen
     fig.show()
+
+def raw_to_csv(filepath, delimiter="\t", skiprows=0, header='infer'):
+    """
+    Konvertiert eine .raw-Datei in eine .csv-Datei im selben Verzeichnis.
+
+    Parameter:
+    - filepath (str): Pfad zur .raw-Datei.
+    - delimiter (str): Trennzeichen, standardmäßig Tabulator.
+    - skiprows (int): Anzahl der zu überspringenden Zeilen.
+    - header (int, list of int, 'infer' or None): Zeile(n) für Header.
+
+    Rückgabe:
+    - output_path (str): Pfad zur erzeugten .csv-Datei.
+    """
+    if not filepath.lower().endswith('.raw'):
+        raise ValueError("Datei muss die Endung '.raw' haben.")
+
+    # Einlesen der .raw-Datei
+    df = pd.read_csv(filepath, delimiter=delimiter, skiprows=skiprows, header=header)
+
+    # Neuer Dateiname mit .csv-Endung
+    csv_path = os.path.splitext(filepath)[0] + '.csv'
+
+    # Speichern als CSV
+    df.to_csv(csv_path, index=False)
+
+    return csv_path
